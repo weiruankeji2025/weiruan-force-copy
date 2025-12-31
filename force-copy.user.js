@@ -2,7 +2,7 @@
 // @name         网页强制复制破解工具 Pro
 // @name:en      Force Copy Pro - Ultimate Copy Protection Bypass
 // @namespace    http://tampermonkey.net/
-// @version      3.0.0
+// @version      3.0.1
 // @description  破解网站复制限制，防止复制后跳转，支持图片/Canvas/背景图OCR文字提取，专门优化百度文库等难度网站
 // @description:en Bypass website copy protection, prevent redirect after copy, support image/canvas/background OCR, optimized for Baidu Wenku
 // @author       WeiRuan
@@ -287,17 +287,22 @@
             return null;
         };
 
-        // 拦截location变更
+        // 拦截location变更（使用try-catch避免某些浏览器的限制）
         ['href', 'assign', 'replace'].forEach(prop => {
-            const original = window.location[prop];
-            Object.defineProperty(window.location, prop, {
-                get: () => original,
-                set: (value) => {
-                    log(`拦截了 location.${prop} 修改`, value);
-                    notify('已阻止页面跳转');
-                    return true;
-                }
-            });
+            try {
+                const original = window.location[prop];
+                Object.defineProperty(window.location, prop, {
+                    get: () => original,
+                    set: (value) => {
+                        log(`拦截了 location.${prop} 修改`, value);
+                        notify('已阻止页面跳转');
+                        return true;
+                    },
+                    configurable: true
+                });
+            } catch (e) {
+                log(`无法拦截 location.${prop}:`, e.message);
+            }
         });
 
         // 监控复制事件
